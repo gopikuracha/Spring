@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Concept
+	How does Spring Work?
+		Spring Container initialization?
+			Bean Factory Post Processor is called first,
+			Bean factory is initialized,
+			All the singleton beans and the prototype beans that are referenced in singleton beans are initialized 
+				Bean Name Aware is invoked if any
+				Application Context Aware is invoked if any
+				Bean post processors are invoked
+					Post Processor before initialization is invoked
+				Initializing Bean invoked after properties are set
+				My Inti invoked
+				Bean post processors are again invoked
+					Post Processor After Initialization is invoked
+				
+				Disposable Bean invoked
+				My Destroy invoked
+				
+				by default, Spring beans are created when the Bean Factory (application context) is initialized and not when the get bean is invoked
+				Order of bean initialization - Individual beans are initialized first and then the dependent beans
+				
+			How to configure, to create beans later when get bean happens?
+				this happens for prototype beans during application execution
+			How are beans created? Does it use Java reflection API to read the configuration file and create beans accordingly?
+	1. Tags
+		beans (default-init-method*, default-destroy-method*)
+			bean (id, class, name*, autowire*, scope*, parent*, abstract*, init-method*, destroy-method*)
+			
+				property (name, value or ref) - Setter Injection 
+					Default Constructor would initially be invoked and then a setter method
+					a -> ref, 
+						refers to id or name of other object in the configuration file
+					bean (id(optional), class) - inner bean
+					idref () - To make sure we refer to an id of other bean than any name or alias
+					list (merge*)
+						ref (bean)
+						a -> merge, setting this to true will merge the collections from parent to child
+						
+				constructor-arg (value or ref, type*, index*) - Constructor Injection
+					assigns the values depending on the type and count of the constructor arguments
+					a -> type, 
+						type of the argument, used to specify which constructor has to be invoked during ambiguity
+						possible values - int, java.lang.String
+					a -> index,
+						is used to assign the values in the order of constructor arguments
+						Starts from zero
+					a -> ref,
+						refers to id or name of other object in the configuration file
+				What if we use both? property will get preference over constructor-arg
+				
+				a -> id,
+					Is unique for a file, so its better to use an id than name or alias
+				a -> name,
+					Will be referenced same as id or any alias
+				a -> autowire,
+					default is off
+					byName, refers to the id's of the beans in the configuration file
+					byType, looks for the class (type) of the bean in the configuration file
+						Should have unique objects of the type that are required by the bean
+					constructor, 
+						instead of setter injection, it uses constructor injection
+						there should be only one matching constructor args
+						it only looks for the type of the attributes
+					Not a good practice to use this feature
+				a -> scope
+					default value is singleton
+					singleton, only once per spring container
+						Not a pure singleton, because there can be multiple Spring containers running in JVM
+					prototype, new bean created with every request or reference
+					When to use Prototype?
+					Web-aware scopes
+						request, new bean per servlet request
+						session, new bean per session
+						global session, new bean per global HTTP session (portlet context)
+				a -> parent,
+					value, the id or name of the parent bean
+					inherits the properties of a parent bean
+					We can also override any of the properties of the parent
+				a -> abstract,
+					setting this value to true will not create this bean, but will use it as a template for creating child beans
+				a -> init-method,
+					executes this method of the bean after a bean is initialized
+					overrides the default-init-method of beans tag
+				a -> destroy-method,
+					executes this method of the bean before a bean is destroyed
+					overrides the default-destroy-method of beans tag
+				
+				qualifier (value) - Autowiring
+					Used to autowire a bean to other beans based on the qualifier value mentioned in the bean class as well
+					
+					
+			< end of bean tag >
+			
+			alias (name, alias)
+				a -> alias 
+					alias can be used anywhere in the application like an id
+			
+			a -> default-init-method,
+				executes this method if exist for all the beans after a bean is initialized
+			a -> default-destroy-method,
+				executes this method if exist for all the beans before a bean is destroyed
+		
+		< end of beans tag >
+		
+	2. PropertyPlaceholderConfigurer
+		This is a BeanFactoryPostProcessor class provided by Spring
+		properties
+			name - locations
+			value - classpath:config.properties
+	
+	3. RequiredAnnotationBeanPostProcessor
+		This is a Bean Post Processor that is used to check whether any attributes of a Spring bean are marked as @Required
+		Bean attributes are made required by adding an annotation @Required	on the setter of an attribute
+		
+	4. AutowiredAnnotationBeanPostProcessor
+		This is a Bean Post Processor that is used to check whether any attributes of a Spring bean are marked as @Autowired
+			Bean attributes are made autowired by adding an annotation @Autowired on the setter of an attribute
+		One other way is to have a Qualifier tag to autowire the required bean
+		
+	5. context:annotation-config
+		can be used as an alternate to declare all the Spring Bean Post Processors
+	
+	6. context:component-scan (base-package)
+		This is used to let Spring know that there are classes that are declared as components (@Component on top of the class)
+		It also scans for the beans that are declared as @Service, @Repository - (Data Object), @Controller - (MVC)
+		All these classes @Component, @Service, @Repository and @Controller are called as Steriotypical roles
+		These classes cannot have multiple entries in configuration file as they are expected to be One particular type of Spring bean only
+		a -> base-package
+			The package that need to be scanned, for performance issue to not scan all the classes
+	
+	7. ResourceBundleMessageSource
+		Implements MessageSource interface
+		Used to configure messages in a properties file and used them in the code using
+			getMessage method of ApplicationContext or MessageSource
+		Can inject this bean to an other class using dependency injection
+		Can have multiple property files for the same property basenames
+	
+	Examples
+	1. Creating an ArrayList bean - refer the file	
+	
+ -->
+
+<beans default-init-method="myGlobalInit" default-destroy-method="myGlobalDestroy" 
+	xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+   	http://www.springframework.org/schema/beans 
+   	http://www.springframework.org/schema/beans/spring-beans.xsd
+   	http://www.springframework.org/schema/context 
+   	http://www.springframework.org/schema/context/spring-context.xsd">
+   
+	<bean id="origin" class="com.kriss.spring.DemoApp.model.Point" scope="prototype">
+		<property name="x" value="0" />
+		<property name="y" value="0" />
+	</bean>
+	
+	<bean id="a" class="com.kriss.spring.DemoApp.model.Point">
+		<property name="x" value="5" />
+		<property name="y" value="15" />
+	</bean>
+	
+	<bean id="b" class="com.kriss.spring.DemoApp.model.Point">
+		<qualifier  value="startOfLine"/>
+		<property name="x" value="${Point1.x}" />
+		<property name="y" value="${Point1.y}" />
+	</bean>
+	
+	<bean id="c" class="com.kriss.spring.DemoApp.model.Point">
+		<property name="x" value="-20" />
+		<property name="y" value="-30" />
+	</bean>
+	
+	<bean id="pointsList" class="java.util.ArrayList">
+		<constructor-arg>
+			<list>
+				<ref bean="origin" />
+				<ref bean="b" />
+			</list>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="abstract-triangle" name="ab-tr" abstract="true">
+		<constructor-arg value="equi" />
+		<constructor-arg value="20" />
+		<property name="type" value="isocles" />
+		<property name="a" ref="origin" />
+		<property name="b" ref="origin" />
+		<property name="c" ref="origin" />
+		<property name="points">
+			<list>
+				<ref bean="origin" />
+			</list>
+		</property>
+	</bean>
+	<alias name="abstract-triangle" alias="tr"/>
+	
+	<bean id="triangle" class="com.kriss.spring.DemoApp.model.Triangle" init-method="myInit" destroy-method="myDestroy" parent="tr">
+		<property name="c" ref="c" />
+		<property name="b">
+			<bean class="com.kriss.spring.DemoApp.model.Point">
+				<property name="x" value="10" />
+				<property name="y" value="20" />
+			</bean>
+		</property>
+		<property name="points">
+			<list merge="true">
+				<ref bean="b" />
+				<ref bean="c" />
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="tr-2" class="com.kriss.spring.DemoApp.model.Triangle">
+		<property name="type" value="New Equi Tr"></property>
+		<constructor-arg value="50" index="1" />
+		<constructor-arg value="Right angled" index="0" />
+		<constructor-arg ref="pointsList" index="2"/>
+	</bean>
+	
+	<bean id="autowired-1-triangle" class="com.kriss.spring.DemoApp.model.Triangle" autowire="byName">
+		<property name="type" value="Autowired Triangle"></property>
+	</bean>
+	
+	<!-- <bean id="autowired-2-triangle" class="com.kriss.spring.DemoApp.model.Triangle" autowire="byType">
+		<property name="type" value="Autowired Triangle"></property>
+	</bean> -->
+	
+	<bean id="autowired-3-triangle" class="com.kriss.spring.DemoApp.model.Triangle" autowire="constructor">
+		<property name="type" value="Autowired Triangle"></property>
+	</bean>
+	
+	<bean id="p" class="com.kriss.spring.DemoApp.model.Line" >
+	</bean>
+	
+	<bean id="line" class="com.kriss.spring.DemoApp.model.Line" >
+		<qualifier value="DefaultAutowireLine" />
+	</bean>
+	
+	<!-- Custom Bean Post Processors -->
+	<bean class="com.kriss.spring.DemoApp.DisplayNameBeanPostProcessor" />
+	<bean class="com.kriss.spring.DemoApp.MyBeanFactoryPostProcessor" />
+	
+	<!-- Configurable Pre-Implemented Spring Bean Post Processor -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations" value="classpath:config.properties"></property>
+	</bean>
+	
+	<!-- Shortcut to declare all the Pre-Implemented Spring Bean Post Processors -->
+	<context:annotation-config />
+	<!-- <bean class="org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor" />
+	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" /> -->
+	
+	<!-- To scan the beans declared in classes by @Component, @Service, @Repository, @Controller -->
+	<context:component-scan base-package="com.kriss.spring.DemoApp" />
+	
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>mymessage</value>
+				<value>drawing-messages</value>
+			</list>
+		</property>
+	</bean>
+	
+</beans>
