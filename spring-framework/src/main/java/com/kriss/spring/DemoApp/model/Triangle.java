@@ -148,8 +148,6 @@ public class Triangle implements Shape, ApplicationContextAware, BeanNameAware, 
 		return q;
 	}
 
-	@Autowired
-	@Qualifier("DefaultAutowireLine")
 	public void setQ(Line q) {
 		this.q = q;
 	}
@@ -158,8 +156,6 @@ public class Triangle implements Shape, ApplicationContextAware, BeanNameAware, 
 		return r;
 	}
 
-	@Autowired
-	@Qualifier("DefaultAutowireLine")
 	public void setR(Line r) {
 		this.r = r;
 	}

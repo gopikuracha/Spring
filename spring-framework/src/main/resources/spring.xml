@@ -137,20 +137,29 @@
 		Can inject this bean to an other class using dependency injection
 		Can have multiple property files for the same property basenames
 	
-	Examples
+	8. <aop:aspectj-autoproxy>
+		To let Spring understand that we are using AspectJ programming
+		Create the Aspect beans
+	
+	Sample code examples
 	1. Creating an ArrayList bean - refer the file	
 	
  -->
 
 <beans default-init-method="myGlobalInit" default-destroy-method="myGlobalDestroy" 
 	xmlns="http://www.springframework.org/schema/beans" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
 	xmlns:context="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="
    	http://www.springframework.org/schema/beans 
    	http://www.springframework.org/schema/beans/spring-beans.xsd
+   	http://www.springframework.org/schema/aop 
+   	http://www.springframework.org/schema/aop/spring-aop.xsd
    	http://www.springframework.org/schema/context 
    	http://www.springframework.org/schema/context/spring-context.xsd">
+   	
+   	<aop:aspectj-autoproxy />
    
 	<bean id="origin" class="com.kriss.spring.DemoApp.model.Point" scope="prototype">
 		<property name="x" value="0" />
@@ -254,7 +263,7 @@
 	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" /> -->
 	
 	<!-- To scan the beans declared in classes by @Component, @Service, @Repository, @Controller -->
-	<context:component-scan base-package="com.kriss.spring.DemoApp" />
+	<context:component-scan base-package="com.kriss.spring" />
 	
 	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
 		<property name="basenames">
@@ -265,4 +274,17 @@
 		</property>
 	</bean>
 	
+	<!-- <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+		<property name="driverClassName" value="org.apache.derby.jdbc.ClientDriver"/>
+		<property name="url" value="jdbc:derby://localhost:1527/db;create=true" />
+	</bean> -->
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" >
+		<property name="driverClassName" value="org.apache.derby.jdbc.ClientDriver"/>
+		<property name="url" value="jdbc:derby://localhost:1527/db;create=true" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="5" />
+	</bean>
+	
+
 </beans>
